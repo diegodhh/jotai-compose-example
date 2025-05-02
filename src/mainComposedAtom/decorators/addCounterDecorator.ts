@@ -18,7 +18,7 @@ export const createCounterDecorator = (
     DispatcherAction<Action, never>,
     { count: number }
   > = {
-    getter: ({ last }) => {
+    getter: () => {
       return atom((get) => ({ count: get(countAtom) }));
     },
     setter: ({ stateHelper: { set, get }, update }) => {

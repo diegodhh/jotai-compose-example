@@ -5,28 +5,20 @@ import {
   DispatcherAction,
   ExtendStateAndDeriveDecorator,
 } from "jotai-composer";
+import { Base } from "../types";
+import { BaseAction } from "./basePlusOneDecorator";
 
-export type FirstPlusOne = {
-  base: number;
-  firstPlusOne: number;
-};
-
-export enum BaseAction {
-  SAVE_BASE = "SAVE_BASE",
-}
-
-export const createBasePlusOneDecorator = (
+export const createBaseDecorator = (
   baseNumberAtom: WritableAtom<number, [number], void>
 ) => {
   const firstPlusOneDecorator: ExtendStateAndDeriveDecorator<
     Partial<object>,
     Required<DispatcherAction<BaseAction, number>>,
-    FirstPlusOne
+    Base
   > = {
     getter: () => {
       return atom((get) => ({
         base: get(baseNumberAtom),
-        firstPlusOne: get(baseNumberAtom) + 1,
       }));
     },
     setter: ({ stateHelper: { set }, update }) => {

@@ -2,10 +2,10 @@
 
 import { useAtom } from "jotai";
 import "./App.css";
-import { composedAtom } from "./coposedAtom";
-import { Action } from "./decorators/addCounterDecorator";
-import { ModalAction } from "./decorators/addModalDecorator";
-import { BaseAction } from "./decorators/basePlusOneDecorator";
+import { composedAtom } from "./mainComposedAtom";
+import { Action } from "./mainComposedAtom/decorators/addCounterDecorator";
+import { BaseAction } from "./mainComposedAtom/decorators/basePlusOneDecorator";
+import { ModalAction, ModalType } from "./modalComposed/types";
 
 function App() {
   const [atomValue, dispatch] = useAtom(composedAtom);
@@ -22,15 +22,32 @@ function App() {
   const handleOpenModal = () => {
     dispatch({
       type: ModalAction.OPEN_MODAL,
-      payload: "This is a modal message!",
+    });
+  };
+  const handleSetModalToSuccess = () => {
+    dispatch({
+      type: ModalAction.SET_MODAL_TYPE,
+      payload: ModalType.SUCCESS,
+    });
+  };
+  const handleSetModalToWarning = () => {
+    dispatch({
+      type: ModalAction.SET_MODAL_TYPE,
+      payload: ModalType.WARNING,
+    });
+  };
+  const handleSetModalToError = () => {
+    dispatch({
+      type: ModalAction.SET_MODAL_TYPE,
+      payload: ModalType.ERROR,
     });
   };
   const handleCloseModal = () => {
     dispatch({
       type: ModalAction.CLOSE_MODAL,
-      payload: null,
     });
   };
+
   return (
     <div className="app-container">
       <div className="content-card">
@@ -49,19 +66,41 @@ function App() {
             <span className="value">{atomValue.count}</span>
           </div>
         </div>
-        <button onClick={handleAddCount} className="add-button">
-          Add Count
-        </button>
-        <button onClick={handleSaveBase} className="random-base-button">
-          Set Random Base
-        </button>
-        <button onClick={handleOpenModal} className="open-modal-button">
-          Open Modal
-        </button>
-        {atomValue.isOpen && (
-          <div className="modal">
+        <div className="button-group">
+          <button onClick={handleAddCount} className="add-button">
+            Add Count
+          </button>
+          <button onClick={handleSaveBase} className="random-base-button">
+            Set Random Base
+          </button>
+        </div>
+        <div className="modal-controls">
+          <button onClick={handleOpenModal} className="open-modal-button">
+            Open Modal
+          </button>
+          <div className="modal-type-buttons">
+            <button
+              onClick={handleSetModalToSuccess}
+              className="success-button"
+            >
+              Success
+            </button>
+            <button
+              onClick={handleSetModalToWarning}
+              className="warning-button"
+            >
+              Warning
+            </button>
+            <button onClick={handleSetModalToError} className="error-button">
+              Error
+            </button>
+          </div>
+        </div>
+        {atomValue.modal.isOpen && (
+          <div className={`modal modal-${atomValue.modal.modalType}`}>
             <div className="modal-content">
-              <span>{atomValue.content}</span>
+              <h2>{atomValue.modal.modalType.toUpperCase()}</h2>
+              <p>{atomValue.modal.content}</p>
               <button onClick={handleCloseModal} className="close-modal-button">
                 Close Modal
               </button>
