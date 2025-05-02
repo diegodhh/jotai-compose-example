@@ -2,56 +2,36 @@
 
 # Jotai Composer Example
 
-This project demonstrates the use of Jotai Composer to manage state in a React application, showcasing how to implement state management using decorators.
+This project demonstrates the use of Jotai Composer to create a modular state management system with multiple decorators. It showcases how to compose different state patterns together in a React application.
 
 ## Features
 
-- State management using Jotai and Jotai Composer
-- Counter implementation
-- Base number with derived value (base + 1)
-- Persistent state using localStorage
-- Modern UI with animations
+- **Counter State**: Simple counter with increment functionality
+- **Base Plus One State**: Manages a base number and its derived value (base + 1)
+- **Modal State**: Advanced modal system with:
+  - Open/Close functionality
+  - Multiple modal types (Success, Warning, Error)
+  - Type-specific content and styling
+  - Persistent state
 
 ## Project Structure
 
 ```
 src/
-├── decorators/
-│   ├── addCounterDecorator.ts    # Counter state management
-│   ├── addModalDecorator.ts      # Modal state management
-│   └── basePlusOneDecorator.ts   # Base number state management
-├── assets/                       # Static assets
-├── App.tsx                       # Main application component
-├── App.css                       # Application styles
-├── coposedAtom.ts               # Composed atom combining all decorators
-├── index.css                    # Global styles
-├── main.tsx                     # Application entry point
-└── vite-env.d.ts               # Vite environment declarations
-```
-
-## State Management
-
-The application uses Jotai Composer to manage state through decorators:
-
-### Counter Decorator
-
-```typescript
-export enum Action {
-  ADD_COUNT = "ADD_COUNT",
-}
-```
-
-### Base Plus One Decorator
-
-```typescript
-export type FirstPlusOne = {
-  base: number;
-  firstPlusOne: number;
-};
-
-export enum BaseAction {
-  SAVE_BASE = "SAVE_BASE",
-}
+├── mainComposedAtom/          # Main state composition
+│   ├── decorators/           # Core state decorators
+│   │   ├── addCounterDecorator.ts
+│   │   └── basePlusOneDecorator.ts
+│   └── index.ts             # Main composed atom
+├── modalComposed/            # Modal state composition
+│   ├── decorators/          # Modal-specific decorators
+│   │   ├── contentDecorator.ts
+│   │   ├── isOpenDecorator.ts
+│   │   └── modalTypeDecorator.ts
+│   ├── types.ts             # Modal type definitions
+│   └── index.ts             # Modal composed atom
+├── App.tsx                  # Main application component
+└── App.css                 # Application styles
 ```
 
 ## Getting Started
@@ -76,31 +56,56 @@ npm run build
 
 ## Usage
 
-The application provides several interactive features:
+### Counter
 
-- **Counter**: Click the "Add Count" button to increment the counter
-- **Random Base**: Click the "Set Random Base" button to set a random base number
+- Click "Add Count" to increment the counter
+- The count is persisted between page reloads
 
-## State Persistence
+### Base Plus One
 
-All state is persisted in localStorage using `atomWithStorage` from Jotai utils. This means your state will be preserved even after page refresh.
+- Click "Set Random Base" to set a random base number
+- The base number and its derived value (base + 1) are displayed
+- Both values are persisted between page reloads
+
+### Modal
+
+- Click "Open Modal" to show the modal
+- Use the type buttons (Success, Warning, Error) to change modal type
+- Each type has its own styling and content
+- Click "Close Modal" to hide it
+- Modal state is persisted between page reloads
+
+## State Management
+
+The project uses Jotai Composer to create a modular state management system:
+
+1. **Main State** (`mainComposedAtom/`):
+
+   - Combines counter and base plus one states
+   - Uses `atomWithStorage` for persistence
+
+2. **Modal State** (`modalComposed/`):
+   - Manages modal visibility, type, and content
+   - Uses separate decorators for each aspect
+   - Persists state using `atomWithStorage`
 
 ## Styling
 
-The application uses CSS for styling with:
+The application uses a clean, modern design with:
 
-- Modern, clean design
 - Responsive layout
+- Smooth animations
+- Type-specific modal styling
 - Interactive button states
+- Consistent color scheme
 
-## Dependencies
+## Technologies Used
 
 - React
 - Jotai
 - Jotai Composer
-- Remeda
 - TypeScript
-- Vite
+- CSS Modules
 
 ## Development
 
