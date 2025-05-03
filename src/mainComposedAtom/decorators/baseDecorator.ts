@@ -5,8 +5,7 @@ import {
   DispatcherAction,
   ExtendStateAndDeriveDecorator,
 } from "jotai-composer";
-import { Base } from "../types";
-import { BaseAction } from "./basePlusOneDecorator";
+import { Base, BaseAction } from "../types";
 
 export const createBaseDecorator = (
   baseNumberAtom: WritableAtom<number, [number], void>

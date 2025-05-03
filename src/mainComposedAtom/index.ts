@@ -9,7 +9,7 @@ import { pipe } from "remeda";
 import { composedModalAtom } from "../modalComposed";
 import { createCounterDecorator } from "./decorators/addCounterDecorator";
 import { createBaseDecorator } from "./decorators/baseDecorator";
-import { createBasePlusDecorator } from "./decorators/basePlusOneDecorator";
+import { createBasePlusDecorator } from "./decorators/basePlusDecorator";
 const baseAtom = atomWithStorage("base", 1);
 const counterAtom = atomWithStorage("counter", 0);
 export const composedAtom = pipe(
@@ -17,7 +17,7 @@ export const composedAtom = pipe(
   extendStateAndDeriveFromDecorator(
     composedToDecorator({
       composed: composedModalAtom,
-      keyString: "modal",
+      keyString: "modal" as const,
     })
   ),
   extendStateAndDeriveFromDecorator(createBaseDecorator(baseAtom)),

@@ -4,12 +4,11 @@ import { useAtom } from "jotai";
 import "./App.css";
 import { composedAtom } from "./mainComposedAtom";
 import { Action } from "./mainComposedAtom/decorators/addCounterDecorator";
-import { BaseAction } from "./mainComposedAtom/decorators/basePlusOneDecorator";
+import { BaseAction } from "./mainComposedAtom/types";
 import { ModalAction, ModalType } from "./modalComposed/types";
 
 function App() {
   const [atomValue, dispatch] = useAtom(composedAtom);
-
   const handleAddCount = () => {
     dispatch({ type: Action.ADD_COUNT });
   };
@@ -59,7 +58,7 @@ function App() {
           </div>
           <div className="value-item">
             <span className="label">First Value + 1:</span>
-            <span className="value">{atomValue.firstPlusOne}</span>
+            <span className="value">{atomValue.basePlus}</span>
           </div>
           <div className="value-item">
             <span className="label">Count:</span>
