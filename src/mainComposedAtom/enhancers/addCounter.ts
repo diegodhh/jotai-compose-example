@@ -1,28 +1,25 @@
 /** @format */
 
 import { atom, WritableAtom } from "jotai";
-import {
-  DispatcherAction,
-  ExtendStateAndDeriveDecorator,
-} from "jotai-composer";
+import { AtomEnhancer, DispatcherAction } from "jotai-composer";
 
-export enum Action {
+export enum CounterAction {
   ADD_COUNT = "ADD_COUNT",
 }
 
-export const createCounterDecorator = (
+export const createCounter = (
   countAtom: WritableAtom<number, [number], void>
 ) => {
-  const counterDecorator: ExtendStateAndDeriveDecorator<
+  const enhancer: AtomEnhancer<
     object,
-    DispatcherAction<Action, never>,
+    DispatcherAction<CounterAction, never>,
     { count: number }
   > = {
-    getter: () => {
+    read: () => {
       return atom((get) => ({ count: get(countAtom) }));
     },
-    setter: ({ stateHelper: { set, get }, update }) => {
-      if (update.type === Action.ADD_COUNT) {
+    write: ({ stateHelper: { set, get }, update }) => {
+      if (update.type === CounterAction.ADD_COUNT) {
         set(countAtom, get(countAtom) + 1);
         return {
           shouldAbortNextSetter: true,
@@ -33,5 +30,5 @@ export const createCounterDecorator = (
       };
     },
   };
-  return counterDecorator;
+  return enhancer;
 };

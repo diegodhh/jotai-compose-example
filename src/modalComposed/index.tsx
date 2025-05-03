@@ -1,11 +1,11 @@
 /** @format */
 
-import { extendStateAndDeriveFromDecorator } from "jotai-composer";
+import { composedToEnhancer, enhanceWith } from "jotai-composer";
 import { atomWithStorage } from "jotai/utils";
 import { pipe } from "remeda";
-import { createContentDecorator } from "./decorators/contentDecorator";
-import { createIsOpenDecorator } from "./decorators/isOpenDecorator";
-import { createModalTypeDecorator } from "./decorators/modalTypeDecorator";
+import { createContent } from "./enhancers/content";
+import { createIsOpen } from "./enhancers/isOpen";
+import { createModalType } from "./enhancers/modalType";
 import { ModalType } from "./types";
 
 const isOpenAtom = atomWithStorage<boolean>("isOpen", false);
@@ -18,10 +18,13 @@ const modalTypeContentMapper = {
   [ModalType.WARNING]: "This is a warning modal",
   [ModalType.ERROR]: "This is an error modal",
 };
-export const composedModalAtom = pipe(
-  extendStateAndDeriveFromDecorator(createIsOpenDecorator(isOpenAtom))(),
-  extendStateAndDeriveFromDecorator(createModalTypeDecorator(modalTypeAtom)),
-  extendStateAndDeriveFromDecorator(
-    createContentDecorator(modalTypeContentMapper)
-  )
+const composedModalAtom = pipe(
+  enhanceWith(createIsOpen(isOpenAtom))(),
+  enhanceWith(createModalType(modalTypeAtom)),
+  enhanceWith(createContent(modalTypeContentMapper))
 );
+
+export const modalEnhancer = composedToEnhancer({
+  composed: composedModalAtom,
+  keyString: "modal",
+});

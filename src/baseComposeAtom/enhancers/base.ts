@@ -1,26 +1,23 @@
 /** @format */
 
 import { atom, WritableAtom } from "jotai";
-import {
-  DispatcherAction,
-  ExtendStateAndDeriveDecorator,
-} from "jotai-composer";
+import { AtomEnhancer, DispatcherAction } from "jotai-composer";
 import { Base, BaseAction } from "../types";
 
-export const createBaseDecorator = (
+export const createBase = (
   baseNumberAtom: WritableAtom<number, [number], void>
 ) => {
-  const firstPlusOneDecorator: ExtendStateAndDeriveDecorator<
+  const enhancer: AtomEnhancer<
     Partial<object>,
     Required<DispatcherAction<BaseAction, number>>,
     Base
   > = {
-    getter: () => {
+    read: () => {
       return atom((get) => ({
         base: get(baseNumberAtom),
       }));
     },
-    setter: ({ stateHelper: { set }, update }) => {
+    write: ({ stateHelper: { set }, update }) => {
       if (update.type === BaseAction.SAVE_BASE) {
         set(baseNumberAtom, update.payload ?? 0);
         return { shouldAbortNextSetter: true };
@@ -28,5 +25,5 @@ export const createBaseDecorator = (
       return { shouldAbortNextSetter: false };
     },
   };
-  return firstPlusOneDecorator;
+  return enhancer;
 };

@@ -1,318 +1,177 @@
 <!-- @format -->
 
-# Jotai Composer Guide
+# Jotai Composer Guide (Example Project)
 
-This guide explains how to use Jotai Composer to manage state in React applications, using our example project's three decorators: Counter, Modal, and Base Plus One.
+This guide explains how the example project uses **Jotai Composer** to build a fully-typed, modular state layer composed of multiple **enhancers**.
+
+> Terminology: In this project we **only** use the term **enhancer** (never _decorator_).
+
+---
 
 ## What is Jotai Composer?
 
-Jotai Composer is a library that extends Jotai's state management capabilities by allowing you to compose multiple state decorators together. In our example, we'll see how to combine three different decorators to create a cohesive state management solution.
+Jotai Composer is a thin wrapper around [Jotai](https://jotai.org/) that lets you **compose** independent pieces of state logic (enhancers) into a single derived atom. Each enhancer owns its own state slice and actions and can be developed, tested, and reasoned about in isolation.
 
-### Key Benefits
+Key benefits:
 
-- **Modular State Management**: Break down complex state into smaller, manageable pieces
-- **Type Safety**: Full TypeScript support for state and actions
-- **Composition**: Combine multiple state patterns seamlessly
-- **Persistence**: Built-in support for state persistence
-- **Performance**: Optimized for React's rendering cycle
+- **Modularity** – split complex state into bite-sized pieces
+- **Composition** – combine enhancers with simple, readable pipelines
+- **Type-safety** – actions and derived state are fully typed
+- **Persistence** – still compatible with `atomWithStorage`
 
-## Our Decorators
+---
 
-### 1. Counter Decorator
+## Enhancers in this Project
 
-Manages a simple counter state with increment functionality.
+| #   | Enhancer         | File                                              | Purpose                                                                                                    |
+| --- | ---------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 1   | Counter          | `src/mainComposedAtom/enhancers/addCounter.ts`    | Adds a numeric `count` value and an action to increment it                                                 |
+| 2   | Base             | `src/baseComposeAtom/enhancers/base.ts`           | Stores a `base` number and an action to save it                                                            |
+| 3   | Base Plus        | `src/baseComposeAtom/enhancers/basePlus.ts`       | Derives `basePlus = base + 1` from the previous enhancer                                                   |
+| 4   | Input State      | `src/mainComposedAtom/enhancers/addInputState.ts` | Manages a text input (`value`) with `SET_VALUE` / `RESET` actions                                          |
+| 5   | Modal (composed) | `src/modalComposed`                               | Handles modal visibility, type, and content through three sub-enhancers (`isOpen`, `modalType`, `content`) |
 
-```typescript
-// src/decorators/addCounterDecorator.ts
-export enum Action {
+---
+
+### 1 – Counter Enhancer (snippet)
+
+```ts
+export enum CounterAction {
   ADD_COUNT = "ADD_COUNT",
 }
-
-export const createCounterDecorator = (
+export const createCounter = (
   countAtom: WritableAtom<number, [number], void>
 ) => {
-  const counterDecorator: ExtendStateAndDeriveDecorator<
+  const enhancer: AtomEnhancer<
     object,
-    DispatcherAction<Action, never>,
+    DispatcherAction<CounterAction, never>,
     { count: number }
   > = {
-    getter: ({ last }) => {
-      return atom((get) => ({ count: get(countAtom) }));
-    },
-    setter: ({ stateHelper: { set, get }, update }) => {
-      if (update.type === Action.ADD_COUNT) {
+    read: () => atom((get) => ({ count: get(countAtom) })),
+    write: ({ stateHelper: { set, get }, update }) => {
+      if (update.type === CounterAction.ADD_COUNT) {
         set(countAtom, get(countAtom) + 1);
         return { shouldAbortNextSetter: true };
       }
       return { shouldAbortNextSetter: false };
     },
   };
-  return counterDecorator;
+  return enhancer;
 };
 ```
 
-### 2. Modal Decorator
+_(see the source file for full code)_
 
-Manages modal state with open/close functionality.
+> All other enhancers follow the same pattern: expose **actions** in an enum and implement a **read/write** pair that maps those actions to state updates.
 
-```typescript
-// src/decorators/addModalDecorator.ts
-export type ModalState = {
-  isOpen: boolean;
-  content: string | null;
-};
+---
 
-export enum ModalAction {
-  OPEN_MODAL = "OPEN_MODAL",
-  CLOSE_MODAL = "CLOSE_MODAL",
-}
+## Composing Enhancers
 
-export const createModalDecorator = (
-  modalAtom: WritableAtom<ModalState, [ModalState], void>
-) => {
-  const modalDecorator: ExtendStateAndDeriveDecorator<
-    Partial<object>,
-    Required<DispatcherAction<ModalAction, string | null>>,
-    ModalState
-  > = {
-    getter: () => {
-      return atom((get) => get(modalAtom));
-    },
-    setter: ({ stateHelper: { set }, update }) => {
-      if (update.type === ModalAction.OPEN_MODAL) {
-        set(modalAtom, {
-          isOpen: true,
-          content: update.payload,
-        });
-        return { shouldAbortNextSetter: true };
-      }
+### Base Compose Atom (sub-composition)
 
-      if (update.type === ModalAction.CLOSE_MODAL) {
-        set(modalAtom, {
-          isOpen: false,
-          content: null,
-        });
-        return { shouldAbortNextSetter: true };
-      }
+`src/baseComposeAtom/index.ts`
 
-      return { shouldAbortNextSetter: false };
-    },
-  };
-  return modalDecorator;
-};
-```
-
-### 3. Base Plus One Decorator
-
-Manages a base number and its derived value (base + 1).
-
-```typescript
-// src/decorators/basePlusOneDecorator.ts
-export type FirstPlusOne = {
-  base: number;
-  firstPlusOne: number;
-};
-
-export enum BaseAction {
-  SAVE_BASE = "SAVE_BASE",
-}
-
-export const createBasePlusOneDecorator = (
-  baseNumberAtom: WritableAtom<number, [number], void>
-) => {
-  const firstPlusOneDecorator: ExtendStateAndDeriveDecorator<
-    Partial<object>,
-    Required<DispatcherAction<BaseAction, number>>,
-    FirstPlusOne
-  > = {
-    getter: () => {
-      return atom((get) => ({
-        base: get(baseNumberAtom),
-        firstPlusOne: get(baseNumberAtom) + 1,
-      }));
-    },
-    setter: ({ stateHelper: { set }, update }) => {
-      if (update.type === BaseAction.SAVE_BASE) {
-        set(baseNumberAtom, update.payload ?? 0);
-        return { shouldAbortNextSetter: true };
-      }
-      return { shouldAbortNextSetter: false };
-    },
-  };
-  return firstPlusOneDecorator;
-};
-```
-
-## Composing the Decorators
-
-In `src/coposedAtom.ts`, we combine all three decorators:
-
-```typescript
-import { extendStateAndDeriveFromDecorator } from "jotai-composer";
-import { atomWithStorage } from "jotai/utils";
-import { pipe } from "remeda";
-import { createCounterDecorator } from "./decorators/addCounterDecorator";
-import {
-  createModalDecorator,
-  ModalState,
-} from "./decorators/addModalDecorator";
-import { createBasePlusOneDecorator } from "./decorators/basePlusOneDecorator";
-
-// Create base atoms
+```ts
 const baseAtom = atomWithStorage("base", 1);
-const counterAtom = atomWithStorage("counter", 0);
-const modalAtom = atomWithStorage<ModalState>("modal", {
-  isOpen: false,
-  content: null,
-});
+const composedBaseAtom = pipe(
+  enhanceWith(createBase(baseAtom))(),
+  enhanceWith(createBasePlus(1))
+);
+export const baseEnhacer = composedToEnhancer({ composed: composedBaseAtom });
+```
 
-// Compose the decorators
+### Main Compose Atom
+
+`src/mainComposedAtom/index.ts`
+
+```ts
+const counterAtom = atomWithStorage("counter", 0);
+const inputAtom = atomWithStorage("input", "");
+
 export const composedAtom = pipe(
-  extendStateAndDeriveFromDecorator(createCounterDecorator(counterAtom))(),
-  extendStateAndDeriveFromDecorator(createBasePlusOneDecorator(baseAtom)),
-  extendStateAndDeriveFromDecorator(createModalDecorator(modalAtom))
+  enhanceWith(createCounter(counterAtom))(), // Counter
+  enhanceWith(baseEnhacer), // Base + BasePlus
+  enhanceWith(createInputState(inputAtom, "")), // Input
+  enhanceWith(modalEnhancer) // Modal (isOpen + type + content)
 );
 ```
 
-## Using in Components
+Result: **`composedAtom`** exposes a single state object:
 
-Here's how to use the composed atom in a React component:
-
-```typescript
-function App() {
-  const [atomValue, dispatch] = useAtom(composedAtom);
-
-  // Counter actions
-  const handleAddCount = () => {
-    dispatch({ type: Action.ADD_COUNT });
-  };
-
-  // Base actions
-  const handleSaveBase = () => {
-    dispatch({
-      type: BaseAction.SAVE_BASE,
-      payload: Math.floor(Math.random() * 100),
-    });
-  };
-
-  // Modal actions
-  const handleOpenModal = () => {
-    dispatch({
-      type: ModalAction.OPEN_MODAL,
-      payload: "This is a modal message!",
-    });
-  };
-
-  const handleCloseModal = () => {
-    dispatch({
-      type: ModalAction.CLOSE_MODAL,
-      payload: null,
-    });
-  };
-
-  return (
-    <div>
-      {/* Counter display */}
-      <div>
-        <span>Count: {atomValue.count}</span>
-        <button onClick={handleAddCount}>Add Count</button>
-      </div>
-
-      {/* Base display */}
-      <div>
-        <span>Base: {atomValue.base}</span>
-        <span>Base + 1: {atomValue.firstPlusOne}</span>
-        <button onClick={handleSaveBase}>Set Random Base</button>
-      </div>
-
-      {/* Modal */}
-      <button onClick={handleOpenModal}>Open Modal</button>
-      {atomValue.isOpen && (
-        <div className="modal">
-          <div className="modal-content">
-            <p>{atomValue.content}</p>
-            <button onClick={handleCloseModal}>Close</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+```ts
+{
+  count: number;
+  base: number;
+  basePlus: number;
+  value: string; // input value
+  modal: {
+    isOpen: boolean;
+    modalType: ModalType;
+    content: string;
+  }
 }
 ```
 
-## Key Concepts Demonstrated
+All enhancer actions can be dispatched through the tuple returned by `useAtom(composedAtom)`.
 
-1. **State Separation**
+---
 
-   - Each decorator manages its own piece of state
-   - Clear separation of concerns
-   - Easy to maintain and test
+## Using the Composed Atom in React
 
-2. **Action Handling**
+Here is a condensed excerpt from `src/App.tsx` illustrating how to interact with the enhancers:
 
-   - Each decorator handles its own actions
-   - Actions are type-safe
-   - Clear action flow
+```tsx
+const [state, dispatch] = useAtom(composedAtom);
 
-3. **State Composition**
+/* Counter */
+<button onClick={() => dispatch({ type: CounterAction.ADD_COUNT })}>
+  Add Count
+</button>
 
-   - Decorators are composed in a specific order
-   - State is combined automatically
-   - Actions are properly routed
+/* Base (random save) */
+<button onClick={() =>
+  dispatch({ type: BaseAction.SAVE_BASE, payload: Math.floor(Math.random()*100) })
+}>
+  Save Random Base
+</button>
 
-4. **Type Safety**
-   - Full TypeScript support
-   - Proper type definitions for state and actions
-   - Compile-time error checking
+/* Input */
+<input
+  value={state.value}
+  onChange={(e) => dispatch({ type: InputAction.SET_VALUE, payload: e.target.value })}
+/>
+<button onClick={() => dispatch({ type: InputAction.RESET })}>Reset</button>
 
-## Best Practices Demonstrated
+/* Modal */
+<button onClick={() => dispatch({ type: ModalAction.OPEN_MODAL })}>Open Modal</button>
+```
 
-1. **Single Responsibility**
+---
 
-   - Each decorator has one job
-   - Clear state boundaries
-   - Focused action handling
+## Best Practices
 
-2. **Type Safety**
+1. **Single Responsibility** – keep each enhancer focused on a single state slice.
+2. **Enum Actions** – always define an enum for actions to guarantee type-safety.
+3. **Avoid Circular Reads** – `read` should stay pure (no side-effects).
+4. **Return `shouldAbortNextSetter`** – when an enhancer handles an action, return `true` to stop other enhancers from processing it.
+5. **Persist Where Needed** – combine `atomWithStorage` with enhancers seamlessly.
 
-   - Proper TypeScript types
-   - Enum for actions
-   - Type-safe payloads
+---
 
-3. **Persistence**
+## Troubleshooting Checklist
 
-   - Using `atomWithStorage`
-   - State survives page refresh
-   - Proper initialization
+| Issue              | Check                                                              |
+| ------------------ | ------------------------------------------------------------------ |
+| Action not handled | Was the enhancer added to the pipeline? Is the enum value correct? |
+| State not updating | Did you forget `shouldAbortNextSetter: true` in `write`?           |
+| Type errors        | Ensure payload types in `DispatcherAction` are correct             |
 
-4. **Composition**
-   - Clear composition order
-   - Proper action handling
-   - State combination
+---
 
-## Troubleshooting
-
-1. **Type Errors**
-
-   - Check action types match exactly
-   - Verify payload types
-   - Ensure state shapes match
-
-2. **State Updates**
-
-   - Verify `shouldAbortNextSetter`
-   - Check action types
-   - Ensure proper payload
-
-3. **Composition Issues**
-   - Check decorator order
-   - Verify state compatibility
-   - Check action conflicts
-
-## Resources
+## Further Reading
 
 - [Jotai Documentation](https://jotai.org/)
-- [Jotai Composer GitHub](https://github.com/jotai-composer/jotai-composer)
-- [Remeda Documentation](https://remedajs.com/)
-- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
-- [React Documentation](https://react.dev/)
+- [Jotai Composer – GitHub](https://github.com/jotai-composer/jotai-composer)
+- [Remeda (utility fp)](https://remedajs.com/)
+- [TypeScript](https://www.typescriptlang.org/)

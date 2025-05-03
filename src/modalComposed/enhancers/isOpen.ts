@@ -1,26 +1,23 @@
 /** @format */
 
 import { atom, WritableAtom } from "jotai";
-import {
-  DispatcherAction,
-  ExtendStateAndDeriveDecorator,
-} from "jotai-composer";
+import { AtomEnhancer, DispatcherAction } from "jotai-composer";
 import { IsOpenState, ModalAction } from "../types";
 
-export const createIsOpenDecorator = (
+export const createIsOpen = (
   isOpenAtom: WritableAtom<boolean, [boolean], void>
 ) => {
-  const isOpenDecorator: ExtendStateAndDeriveDecorator<
+  const enhancer: AtomEnhancer<
     Partial<object>,
     DispatcherAction<ModalAction.OPEN_MODAL | ModalAction.CLOSE_MODAL, never>,
     IsOpenState
   > = {
-    getter: () => {
+    read: () => {
       return atom((get) => ({
         isOpen: get(isOpenAtom),
       }));
     },
-    setter: ({ stateHelper: { set }, update }) => {
+    write: ({ stateHelper: { set }, update }) => {
       if (update.type === ModalAction.OPEN_MODAL) {
         set(isOpenAtom, true);
         return { shouldAbortNextSetter: true };
@@ -35,5 +32,5 @@ export const createIsOpenDecorator = (
       return { shouldAbortNextSetter: false };
     },
   };
-  return isOpenDecorator;
+  return enhancer;
 };

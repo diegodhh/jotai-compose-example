@@ -1,25 +1,19 @@
 /** @format */
 
-import {
-  composedToDecorator,
-  extendStateAndDeriveFromDecorator,
-} from "jotai-composer";
+import { enhanceWith } from "jotai-composer";
 import { atomWithStorage } from "jotai/utils";
 import { pipe } from "remeda";
-import { composedModalAtom } from "../modalComposed";
-import { createCounterDecorator } from "./decorators/addCounterDecorator";
-import { createBaseDecorator } from "./decorators/baseDecorator";
-import { createBasePlusDecorator } from "./decorators/basePlusDecorator";
-const baseAtom = atomWithStorage("base", 1);
+import { baseEnhacer } from "../baseComposeAtom";
+import { modalEnhancer } from "../modalComposed";
+import { createCounter } from "./enhancers/addCounter";
+import { createInputState } from "./enhancers/addInputState";
+
 const counterAtom = atomWithStorage("counter", 0);
+const inputAtom = atomWithStorage("input", "");
+
 export const composedAtom = pipe(
-  extendStateAndDeriveFromDecorator(createCounterDecorator(counterAtom))(),
-  extendStateAndDeriveFromDecorator(
-    composedToDecorator({
-      composed: composedModalAtom,
-      keyString: "modal" as const,
-    })
-  ),
-  extendStateAndDeriveFromDecorator(createBaseDecorator(baseAtom)),
-  extendStateAndDeriveFromDecorator(createBasePlusDecorator(1))
+  enhanceWith(createCounter(counterAtom))(),
+  enhanceWith(baseEnhacer),
+  enhanceWith(createInputState(inputAtom, "")),
+  enhanceWith(modalEnhancer)
 );

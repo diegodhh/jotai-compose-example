@@ -1,24 +1,21 @@
 /** @format */
 
 import { atom } from "jotai";
-import {
-  DispatcherAction,
-  ExtendStateAndDeriveDecorator,
-} from "jotai-composer";
+import { AtomEnhancer, DispatcherAction } from "jotai-composer";
 import { Base, BaseAction, BasePlus } from "../types";
 
-export const createBasePlusDecorator = (increment: number = 1) => {
-  const decorator: ExtendStateAndDeriveDecorator<
+export const createBasePlus = (increment: number = 1) => {
+  const enhancer: AtomEnhancer<
     Base,
     Required<DispatcherAction<BaseAction, number>>,
     BasePlus
   > = {
-    getter: ({ last }) => {
+    read: ({ last }) => {
       return atom(() => ({
         ...last,
         basePlus: last.base + increment,
       }));
     },
   };
-  return decorator;
+  return enhancer;
 };
