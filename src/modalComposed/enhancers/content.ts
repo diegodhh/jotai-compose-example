@@ -1,16 +1,15 @@
 /** @format */
 
-import { AtomEnhancer } from "jotai-composer";
 import { ModalType, ModalTypeState } from "../types";
 
+import { atomEnhancer } from "jotai-composer";
+
 export const createContent = (mapper: Record<ModalType, string>) => {
-  const enhancer: AtomEnhancer<ModalTypeState, never, { content: string }> = {
-    read: ({ last }) => {
+  return atomEnhancer<ModalTypeState, never, { content: string }>(
+    (get, { last }) => {
       return {
-        last,
         content: mapper[last.modalType],
       };
-    },
-  };
-  return enhancer;
+    }
+  );
 };

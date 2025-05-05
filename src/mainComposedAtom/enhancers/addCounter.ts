@@ -1,7 +1,7 @@
 /** @format */
 
-import { atom, WritableAtom } from "jotai";
-import { AtomEnhancer, DispatcherAction } from "jotai-composer";
+import { WritableAtom } from "jotai";
+import { atomEnhancer, DispatcherAction } from "jotai-composer";
 
 export enum CounterAction {
   ADD_COUNT = "ADD_COUNT",
@@ -10,15 +10,13 @@ export enum CounterAction {
 export const createCounter = (
   countAtom: WritableAtom<number, [number], void>
 ) => {
-  const enhancer: AtomEnhancer<
+  return atomEnhancer<
     object,
     DispatcherAction<CounterAction, never>,
     { count: number }
-  > = {
-    read: () => {
-      return atom((get) => ({ count: get(countAtom) }));
-    },
-    write: ({ stateHelper: { set, get }, update }) => {
+  >(
+    (get) => ({ count: get(countAtom) }),
+    (get, set, update) => {
       if (update.type === CounterAction.ADD_COUNT) {
         set(countAtom, get(countAtom) + 1);
         return {
@@ -28,7 +26,6 @@ export const createCounter = (
       return {
         shouldAbortNextSetter: false,
       };
-    },
-  };
-  return enhancer;
+    }
+  );
 };

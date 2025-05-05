@@ -175,3 +175,74 @@ const [state, dispatch] = useAtom(composedAtom);
 - [Jotai Composer – GitHub](https://github.com/jotai-composer/jotai-composer)
 - [Remeda (utility fp)](https://remedajs.com/)
 - [TypeScript](https://www.typescriptlang.org/)
+
+---
+
+## The `atomEnhancer` API
+
+`atomEnhancer` is the core helper exported by **Jotai Composer**. It lets you describe **how a single enhancer works** in a fully-typed way.
+
+```ts
+function atomEnhancer<
+  PrevState extends object, // 👈 State that already exists before this enhancer runs
+  Action extends DispatcherAction<any, any>, // 👈 Actions this enhancer wants to react to
+  AddedState extends object // 👈 State keys this enhancer contributes
+>(
+  read: (
+    get: Getter,
+    helpers: { last: PrevState } // `last` holds the aggregated state from previous enhancers
+  ) => AddedState,
+  write?: (
+    get: Getter,
+    set: Setter,
+    update: Action,
+    helpers: { last: PrevState & AddedState }
+  ) => {
+    /**
+     * When `true` the current enhancer handled the `update` and the remaining
+     * enhancers in the pipeline **will not** receive it. When `false` the
+     * update keeps propagating.
+     */
+    shouldAbortNextSetter: boolean;
+  }
+): AtomEnhancer<PrevState, Action, AddedState>;
+```
+
+A couple of things to notice:
+
+1. **Generics order matters** – previous state, **action**, added state.
+2. **`write` is optional** – omit it for _pure_ enhancers that only derive state (see `basePlus` in this repo).
+3. **Helpers** – both callbacks receive a `helpers.last` argument that contains the state built so far (very handy for derived slices).
+4. **Aborting propagation** – return `{ shouldAbortNextSetter: true }` when you handle an action to prevent other enhancers from touching it.
+
+### Minimal examples
+
+Read-only enhancer (derive `basePlus`):
+
+```ts
+return atomEnhancer<Base, never, BasePlus>((get, { last }) => ({
+  ...last,
+  basePlus: last.base + 1,
+}));
+```
+
+Read **and** write enhancer (`counter`):
+
+```ts
+return atomEnhancer<
+  object,
+  DispatcherAction<CounterAction, never>,
+  { count: number }
+>(
+  (get) => ({ count: get(counterAtom) }),
+  (get, set, update) => {
+    if (update.type === CounterAction.ADD_COUNT) {
+      set(counterAtom, get(counterAtom) + 1);
+      return { shouldAbortNextSetter: true };
+    }
+    return { shouldAbortNextSetter: false };
+  }
+);
+```
+
+With this mental model in place it should be clear how every individual file inside `src/**/enhancers` is built.
