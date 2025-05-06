@@ -42,21 +42,20 @@ export enum CounterAction {
 export const createCounter = (
   countAtom: WritableAtom<number, [number], void>
 ) => {
-  const enhancer: AtomEnhancer<
+  return atomEnhancer<
     object,
     DispatcherAction<CounterAction, never>,
     { count: number }
-  > = {
-    read: () => atom((get) => ({ count: get(countAtom) })),
-    write: ({ stateHelper: { set, get }, update }) => {
+  >(
+    (get) => ({ count: get(countAtom) }),
+    (get, set, update) => {
       if (update.type === CounterAction.ADD_COUNT) {
         set(countAtom, get(countAtom) + 1);
         return { shouldAbortNextSetter: true };
       }
       return { shouldAbortNextSetter: false };
-    },
-  };
-  return enhancer;
+    }
+  );
 };
 ```
 
@@ -74,11 +73,8 @@ _(see the source file for full code)_
 
 ```ts
 const baseAtom = atomWithStorage("base", 1);
-const composedBaseAtom = pipe(
-  enhanceWith(createBase(baseAtom))(),
-  enhanceWith(createBasePlus(1))
-);
-export const baseEnhacer = composedToEnhancer({ composed: composedBaseAtom });
+const composedBaseAtom = pipe(createBase(baseAtom), createBasePlus(1));
+export const baseEnhacer = toEnhancer({ composed: composedBaseAtom });
 ```
 
 ### Main Compose Atom
@@ -90,10 +86,10 @@ const counterAtom = atomWithStorage("counter", 0);
 const inputAtom = atomWithStorage("input", "");
 
 export const composedAtom = pipe(
-  enhanceWith(createCounter(counterAtom))(), // Counter
-  enhanceWith(baseEnhacer), // Base + BasePlus
-  enhanceWith(createInputState(inputAtom, "")), // Input
-  enhanceWith(modalEnhancer) // Modal (isOpen + type + content)
+  createCounter(counterAtom), // Counter
+  baseEnhacer, // Base + BasePlus
+  createInputState(inputAtom, ""), // Input
+  modalEnhancer // Modal (isOpen + type + content)
 );
 ```
 

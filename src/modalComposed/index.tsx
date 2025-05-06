@@ -1,6 +1,6 @@
 /** @format */
 
-import { composedToEnhancer, enhanceWith } from "jotai-composer";
+import { toEnhancer } from "jotai-composer";
 import { atomWithStorage } from "jotai/utils";
 import { pipe } from "remeda";
 import { createContent } from "./enhancers/content";
@@ -19,12 +19,12 @@ const modalTypeContentMapper = {
   [ModalType.ERROR]: "This is an error modal",
 };
 const composedModalAtom = pipe(
-  enhanceWith(createIsOpen(isOpenAtom))(),
-  enhanceWith(createModalType(modalTypeAtom)),
-  enhanceWith(createContent(modalTypeContentMapper))
+  createIsOpen(isOpenAtom)(),
+  createModalType(modalTypeAtom),
+  createContent(modalTypeContentMapper)
 );
 
-export const modalEnhancer = composedToEnhancer({
+export const modalEnhancer = toEnhancer({
   composed: composedModalAtom,
   keyString: "modal",
 });
