@@ -25,16 +25,25 @@ const atomWithLogger = <Value, Args>(
       set(lastAtom, update);
     }
   );
-
-const atomNumberToDescription = (
+const modifySetterToSumArgs = (
   lastAtom: WritableAtom<number, [number], void>
+) =>
+  atom(
+    (get) => get(lastAtom),
+    (get, set, update: number) => {
+      set(lastAtom, get(lastAtom) + update);
+    }
+  );
+
+const atomNumberToDescription = <Args>(
+  lastAtom: WritableAtom<number, [Args], void>
 ) =>
   atom(
     (get) => {
       return `The number is ${get(lastAtom)}`;
     },
-    (get, set, update: number) => {
-      set(lastAtom, get(lastAtom) + update);
+    (get, set, update: Args) => {
+      set(lastAtom, update);
     }
   );
 const atomToUppercase = <Args>(lastAtom: WritableAtom<string, [Args], void>) =>
@@ -54,6 +63,7 @@ export const plusOneAndLoggerPlusDescription = (
     countAtomGeneric,
     plusOneAtom,
     atomWithLogger,
+    modifySetterToSumArgs,
     atomNumberToDescription,
     atomToUppercase
   );
