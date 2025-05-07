@@ -3,6 +3,7 @@
 import { useAtom } from "jotai";
 import "./App.css";
 import { BaseAction } from "./baseComposeAtom/types";
+import Mixing from "./components/Mixing";
 import { composedAtom } from "./mainComposedAtom";
 import { CounterAction } from "./mainComposedAtom/enhancers/addCounter";
 import { InputAction } from "./mainComposedAtom/enhancers/addInputState";
@@ -129,6 +130,9 @@ function App() {
           </div>
         )}
       </div>
+
+      {/* Super Count Atom Demonstration */}
+      <Mixing />
     </div>
   );
 }

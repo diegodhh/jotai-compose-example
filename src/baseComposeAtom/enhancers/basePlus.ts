@@ -9,7 +9,6 @@ export const createBasePlus = (increment: number = 1) => {
     Required<DispatcherAction<BaseAction, number>>,
     BasePlus
   >((get, { last }) => ({
-    ...last,
     basePlus: last.base + increment,
   }));
 };
