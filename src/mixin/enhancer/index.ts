@@ -12,14 +12,16 @@ const plusOneAtom = (lastAtom: WritableAtom<number, [number], void>) =>
       set(lastAtom, update);
     }
   );
-const atomWithLogger = (lastAtom: WritableAtom<number, [number], void>) =>
+const atomWithLogger = <Value, Args>(
+  lastAtom: WritableAtom<Value, [Args], void>
+) =>
   atom(
     (get) => {
       const value = get(lastAtom);
       console.log(value);
       return value;
     },
-    (get, set, update: number) => {
+    (get, set, update: Args) => {
       set(lastAtom, update);
     }
   );
@@ -35,8 +37,23 @@ const atomNumberToDescription = (
       set(lastAtom, get(lastAtom) + update);
     }
   );
+const atomToUppercase = <Args>(lastAtom: WritableAtom<string, [Args], void>) =>
+  atom(
+    (get) => {
+      return get(lastAtom).toUpperCase();
+    },
+    (get, set, update: Args) => {
+      set(lastAtom, update);
+    }
+  );
 
 export const plusOneAndLoggerPlusDescription = (
   countAtomGeneric: WritableAtom<number, [number], void>
 ) =>
-  pipe(countAtomGeneric, plusOneAtom, atomWithLogger, atomNumberToDescription);
+  pipe(
+    countAtomGeneric,
+    plusOneAtom,
+    atomWithLogger,
+    atomNumberToDescription,
+    atomToUppercase
+  );
