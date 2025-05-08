@@ -73,8 +73,15 @@ _(see the source file for full code)_
 
 ```ts
 const baseAtom = atomWithStorage("base", 1);
-const composedBaseAtom = pipe(createBase(baseAtom), createBasePlus(1));
-export const baseEnhacer = toEnhancer({ composed: composedBaseAtom });
+// Example of precomposing enhancers with piped
+const baseComposition = piped(
+  createBase(baseAtom), // First enhancer in the chain
+  createBasePlus(1) // Second enhancer in the chain
+);
+
+// The precomposed enhancers can be exported as a single unit
+
+export const baseEnhacer = piped(createBase(baseAtom), createBasePlus(1));
 ```
 
 ### Main Compose Atom
@@ -86,12 +93,25 @@ const counterAtom = atomWithStorage("counter", 0);
 const inputAtom = atomWithStorage("input", "");
 
 export const composedAtom = pipe(
-  createCounter(counterAtom), // Counter
+  createCounter(counterAtom)(), // auto invoque
   baseEnhacer, // Base + BasePlus
   createInputState(inputAtom, ""), // Input
   modalEnhancer // Modal (isOpen + type + content)
 );
 ```
+
+### Alternative Composition Approach
+
+You can also use `piped` and invoke the final function:
+
+````ts
+export const composedAtom = piped(
+  createCounter(counterAtom),     // Counter enhancer
+  baseEnhacer,                    // Base + BasePlus enhancers
+  createInputState(inputAtom, ""), // Input state management
+  modalEnhancer                   // Modal functionality (isOpen, type, content)
+)(undefined);
+```ts
 
 Result: **`composedAtom`** exposes a single state object:
 
@@ -107,7 +127,7 @@ Result: **`composedAtom`** exposes a single state object:
     content: string;
   }
 }
-```
+````
 
 All enhancer actions can be dispatched through the tuple returned by `useAtom(composedAtom)`.
 
