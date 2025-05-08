@@ -1,30 +1,47 @@
 /** @format */
 
-import { atom, WritableAtom } from "jotai";
+import { atom, Getter, Setter, WritableAtom } from "jotai";
 import { pipe } from "remeda";
+const atomWithLast = <
+  Value = unknown,
+  Args = unknown,
+  LastValue = Value,
+  LastArgs = Args
+>(
+  read: (
+    get: Getter,
+    lastAtom: WritableAtom<LastValue, [LastArgs], void>
+  ) => Value,
+  write: (
+    get: Getter,
+    set: Setter,
+    lastAtom: WritableAtom<LastValue, [LastArgs], void>,
+    update: Args
+  ) => void = (get, set, lastAtom, update) =>
+    set(lastAtom, update as unknown as LastArgs)
+) => {
+  return (lastAtom: WritableAtom<LastValue, [LastArgs], void>) =>
+    atom(
+      (get) => read(get, lastAtom),
+      (get, set, update: Args) => {
+        write(get, set, lastAtom, update);
+      }
+    );
+};
 
-const plusOneAtom = (lastAtom: WritableAtom<number, [number], void>) =>
-  atom(
-    (get) => {
-      return get(lastAtom) + 1;
-    },
-    (get, set, update: number) => {
-      set(lastAtom, update);
-    }
-  );
-const atomWithLogger = <Value, Args>(
-  lastAtom: WritableAtom<Value, [Args], void>
-) =>
-  atom(
-    (get) => {
-      const value = get(lastAtom);
-      console.log(value);
-      return value;
-    },
-    (get, set, update: Args) => {
-      set(lastAtom, update);
-    }
-  );
+const plusOneAtom = atomWithLast<number, number>(
+  (get, lastAtom) => get(lastAtom) + 1,
+  (get, set, lastAtom, update) => set(lastAtom, update)
+);
+
+const atomWithLogger = atomWithLast(
+  (get, lastAtom) => {
+    const value = get(lastAtom);
+    console.log(value);
+    return value;
+  },
+  (get, set, lastAtom, update) => set(lastAtom, update)
+);
 const modifySetterToSumArgs = (
   lastAtom: WritableAtom<number, [number], void>
 ) =>
